@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LAMPES CONNECTÉES | Contrôle en temps réel</title>
+
+<!-- Favicon -->
+<link rel="icon" type="image/png" href="logo.png" />
+
+<!-- Tailwind CSS & Fonts -->
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+
+<style>
+body {
+  font-family: 'Poppins', sans-serif;
+  background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+  color: #f8fafc;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+}
+.header {
+  background: rgba(30, 41, 59, 0.95);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid rgba(255,255,255,0.1);
+  padding: 1rem 0;
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+}
+.auth-container {
+  max-width: 450px;
+  margin: 2rem auto;
+  padding: 2.5rem;
+  background: rgba(30, 41, 59, 0.95);
+  backdrop-filter: blur(10px);
+  border-radius: 1rem;
+  border: 1px solid rgba(59,130,246,0.3);
+  box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+}
+.form-input {
+  width: 100%;
+  padding: 0.875rem 1rem;
+  background: rgba(15,23,42,0.7);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 0.5rem;
+  color: #f8fafc;
+  transition: all 0.3s ease;
+  box-sizing: border-box;
+}
+.form-input:focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59,130,246,0.2);
+  outline: none;
+}
+.auth-btn {
+  padding: 0.75rem 1rem;
+  color: white;
+  border: none;
+  border-radius: 0.5rem;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+.auth-btn:hover { transform: translateY(-2px); box-shadow: 0 10px 20px rgba(37,99,235,0.3); }
+.auth-btn.on { background-color: #10b981; }
+.auth-btn.off { background-color: #ef4444; }
+.logout-btn { background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); }
+.lamp-card {
+  background: rgba(30,41,59,0.5);
+  padding: 1.25rem 1.5rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  transition: all 0.3s ease;
+  margin-bottom: 1rem;
+}
+.lamp-card:hover { background: rgba(30,41,59,0.7); }
+.lamp-status {
+  display: inline-block;
+  width: 0.75rem;
+  height: 0.75rem;
+  border-radius: 50%;
+  margin-right: 0.5rem;
+}
+.status-on { background-color: #10b981; }
+.status-off { background-color: #ef4444; }
+
+.flash-icon {
+  margin-left: 10px;
+  font-size: 1.2rem;
+  transition: color 0.3s ease;
+}
+.flash-on {
+  color: #facc15; /* Jaune */
+  animation: flashBlink 1s infinite;
+}
+.flash-off {
+  color: #6b7280; /* Gris */
+  animation: none;
+}
+
+@keyframes flashBlink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+.toggle-password { cursor: pointer; }
+@media (max-width:768px){.auth-container{margin:1rem;padding:1.5rem}}
+</style>
+</head>
+<body>
+
+<!-- Auth Section -->
+<div id="auth-section">
+<header class="header">
+  <div class="max-w-6xl mx-auto px-4 flex justify-between items-center">
+    <div class="logo flex items-center gap-3">
+      <i class="fas fa-lightbulb text-3xl text-blue-500"></i>
+      <div>
+        <div class="text-xl font-bold bg-gradient-to-r from-blue-500 to-blue-300 bg-clip-text text-transparent">LampesConnect</div>
+        <div class="text-xs text-gray-400">Contrôle en temps réel</div>
+      </div>
+    </div>
+    <div id="online-status" class="text-sm text-gray-400"><i class="fas fa-globe mr-1"></i> En ligne</div>
+  </div>
+</header>
+
+<main class="flex-grow flex items-center justify-center p-4">
+  <form class="auth-container" id="login-form">
+    <div class="text-center mb-8">
+      <i class="fas fa-lightbulb text-5xl mb-4 bg-gradient-to-r from-blue-500 to-blue-300 bg-clip-text text-transparent"></i>
+      <h2 class="text-2xl font-semibold bg-gradient-to-r from-blue-500 to-blue-300 bg-clip-text text-transparent">Connexion</h2>
+      <p class="text-gray-400 mt-2">Accédez à votre espace de contrôle</p>
+    </div>
+
+    <div class="mb-4">
+      <label class="block text-gray-300 mb-2">Adresse email</label>
+      <input type="email" placeholder="exemple@email.com" id="input-email" class="form-input" required />
+    </div>
+
+    <div class="mb-6">
+      <label class="block text-gray-300 mb-2">Mot de passe</label>
+      <div class="relative">
+        <input type="password" placeholder="Votre mot de passe" id="input-password" class="form-input pr-10" required />
+        <i class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 toggle-password fas fa-eye"></i>
+      </div>
+    </div>
+
+    <button type="submit" 
+            class="auth-btn py-3 flex items-center justify-center gap-2 mx-auto bg-blue-600 hover:bg-blue-500 hover:scale-105 transition transform duration-300 ease-in-out shadow-lg hover:shadow-xl" 
+            id="login-button">
+      <i class="fas fa-sign-in-alt"></i> Se connecter
+    </button>
+
+    <div id="login-message" class="mt-4 text-center"></div>
+  </form>
+</main>
+</div>
+
+<!-- Dashboard Section -->
+<div id="dashboard-section" style="display:none;">
+
+<header class="header">
+  <div class="w-full flex justify-between items-center">
+    <div class="flex items-center gap-3 pl-4">
+      <i class="fas fa-lightbulb text-2xl text-blue-500"></i>
+      <div>
+        <div class="text-xl font-bold bg-gradient-to-r from-blue-500 to-blue-300 bg-clip-text text-transparent">
+          LightConnect
+        </div>
+        <div class="text-xs text-gray-400" id="user-welcome">Contrôle en temps réel...</div>
+      </div>
+    </div>
+
+    <div class="flex items-center gap-4 pr-4">
+      <span class="text-sm text-gray-300" id="user-email"></span>
+      <button id="logout-btn" class="auth-btn logout-btn py-2 px-4 flex items-center gap-2">
+        <i class="fas fa-sign-out-alt"></i> Déconnexion
+      </button>
+    </div>
+  </div>
+</header>
+
+<main class="max-w-6xl mx-auto px-4 py-8">
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+    <!-- Statut Global -->
+    <div class="bg-gradient-to-br from-blue-900 to-blue-800 p-6 rounded-xl shadow-lg border border-blue-700/50">
+      <h3 class="text-xl font-semibold text-blue-200 mb-4">Statut Global</h3>
+      <div class="flex justify-between items-center">
+        <div>
+          <p class="text-blue-300 text-sm">Lampes allumées</p>
+          <p class="text-2xl font-bold text-white" id="lamps-on">0</p>
+        </div>
+        <div class="bg-blue-800/50 p-4 rounded-full">
+          <i class="fas fa-lightbulb text-2xl text-blue-300"></i>
+        </div>
+      </div>
+    </div>
+
+    <!-- Consommation -->
+    <div class="bg-gradient-to-br from-indigo-900 to-indigo-800 p-6 rounded-xl shadow-lg border border-indigo-700/50">
+      <h3 class="text-xl font-semibold text-indigo-200 mb-4">Consommation</h3>
+      <div class="flex justify-between items-center">
+        <div>
+          <p class="text-indigo-300 text-sm">Énergie utilisée</p>
+          <p class="text-2xl font-bold text-white">24.5 <span class="text-sm">kWh</span></p>
+        </div>
+        <div class="bg-indigo-800/50 p-4 rounded-full">
+          <i class="fas fa-bolt text-2xl text-indigo-300"></i>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bloc Historique retiré -->
+  </div>
+
+  <div class="bg-gray-800/50 rounded-xl shadow-xl overflow-hidden border border-gray-700/50">
+    <div class="bg-gradient-to-r from-blue-900 to-blue-800 px-6 py-4 border-b border-blue-700/50">
+      <h2 class="text-xl font-semibold text-white flex items-center gap-2">
+        <i class="fas fa-lightbulb"></i> Contrôle des Lampes
+      </h2>
+    </div>
+    <div id="lamps-list" class="flex flex-col p-4"></div>
+  </div>
+</main>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-app.js";
+import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-auth.js";
+import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-database.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyDMeHL4PwrJimAEiEsnPi7xq2l3Czp7vUk",
+  authDomain: "lampconnect-655ba.firebaseapp.com",
+  databaseURL: "https://lampconnect-655ba-default-rtdb.firebaseio.com",
+  projectId: "lampconnect-655ba",
+  storageBucket: "lampconnect-655ba.firebasestorage.app",
+  messagingSenderId: "647666219875",
+  appId: "1:647666219875:web:087064fed28e9644293156",
+  measurementId: "G-6N65W3LGR4"
+};
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getDatabase(app);
+
+const loginForm = document.getElementById("login-form");
+const dashboard = document.getElementById("dashboard-section");
+const authSection = document.getElementById("auth-section");
+const logoutBtn = document.getElementById("logout-btn");
+const lampsList = document.getElementById("lamps-list");
+
+const lampData = [
+  {id: "1", name: "Lampe Salon", icon: "fa-couch", color: "blue"},
+  {id: "2", name: "Lampe Cuisine", icon: "fa-utensils", color: "orange"},
+  {id: "3", name: "Lampe Chambre 1", icon: "fa-bed", color: "green"},
+  {id: "4", name: "Lampe Extérieure", icon: "fa-tree", color: "purple"},
+  {id: "5", name: "Lampe Intérieure", icon: "fa-house", color: "teal"},
+];
+
+function updateLampsCount() {
+  let lampsOn = 0;
+  document.querySelectorAll('.lamp-status').forEach(status => { 
+    if(status.classList.contains('status-on')) lampsOn++; 
+  });
+  document.getElementById('lamps-on').textContent = lampsOn;
+}
+
+document.querySelector(".toggle-password").addEventListener("click", function(){
+  const pwd = document.getElementById("input-password");
+  if(pwd.type === "password"){ pwd.type="text"; this.classList.replace("fa-eye","fa-eye-slash"); }
+  else { pwd.type="password"; this.classList.replace("fa-eye-slash","fa-eye"); }
+});
+
+loginForm.addEventListener("submit", async e => {
+  e.preventDefault();
+  const email = document.getElementById("input-email").value;
+  const password = document.getElementById("input-password").value;
+  try { await signInWithEmailAndPassword(auth,email,password); } 
+  catch(e){ document.getElementById("login-message").textContent = "Erreur: " + e.message; }
+});
+
+onAuthStateChanged(auth,user=>{
+  if(user){
+    authSection.style.display="none";
+    dashboard.style.display="block";
+    document.getElementById("user-email").textContent=user.email;
+
+    lampsList.innerHTML = "";
+    lampData.forEach(lamp=>{
+      const card = document.createElement("div");
+      card.className = "lamp-card";
+      card.id = "lamp-" + lamp.id;
+      card.innerHTML = `
+        <div class="flex items-center gap-4">
+          <span class="lamp-status status-off"></span>
+          <div class="lamp-icon bg-${lamp.color}-900/30 p-3 rounded-lg text-${lamp.color}-400">
+            <i class="fas ${lamp.icon}"></i>
+          </div>
+          <div>
+            <h3 class="font-medium text-white">${lamp.name}
+              <i class="fas fa-bolt flash-icon flash-off" id="flash-${lamp.id}"></i>
+            </h3>
+            <p class="text-xs text-gray-400" id="last-${lamp.id}">Dernière action: --</p>
+          </div>
+        </div>
+        <div class="lamp-buttons mt-2 flex flex-col md:flex-row gap-3">
+          <button class="auth-btn on toggle-lamp" data-lamp="${lamp.id}" data-action="on"><i class="fas fa-power-off"></i> Allumer</button>
+          <button class="auth-btn off toggle-lamp" data-lamp="${lamp.id}" data-action="off"><i class="fas fa-power-off"></i> Éteindre</button>
+        </div>
+      `;
+      lampsList.appendChild(card);
+
+      const lampRef = ref(db,"lamps/"+lamp.id);
+      onValue(lampRef, snapshot=>{
+        const val = snapshot.val();
+        const status = card.querySelector(".lamp-status");
+        const icon = card.querySelector(".lamp-icon i");
+        const flash = card.querySelector("#flash-"+lamp.id);
+        const last = card.querySelector("#last-"+lamp.id);
+
+        if(val?.on){
+          status.classList.remove("status-off"); status.classList.add("status-on");
+          icon.classList.add("text-yellow-400");
+          flash.classList.remove("flash-off"); flash.classList.add("flash-on");
+        } else {
+          status.classList.remove("status-on"); status.classList.add("status-off");
+          icon.classList.remove("text-yellow-400");
+          flash.classList.remove("flash-on"); flash.classList.add("flash-off");
+        }
+
+        last.textContent = "Dernière action: " + (val?.last || "--");
+        updateLampsCount();
+      });
+    });
+
+    document.querySelectorAll(".toggle-lamp").forEach(btn=>{
+      btn.addEventListener("click",()=>{
+        const lampId = btn.dataset.lamp;
+        const action = btn.dataset.action;
+        const lampRef = ref(db,"lamps/"+lampId);
+        const date = new Date();
+        set(lampRef,{on: action==="on", last: date.getHours()+":"+String(date.getMinutes()).padStart(2,"0")});
+      });
+    });
+
+  } else { authSection.style.display="block"; dashboard.style.display="none"; }
+});
+
+logoutBtn.addEventListener("click",()=>signOut(auth));
+</script>
+</body>
+</html>
